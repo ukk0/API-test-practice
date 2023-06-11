@@ -9,6 +9,7 @@ from resources.request_payloads import (
 API_URL = "https://restful-booker.herokuapp.com"
 API_KEY = "YWRtaW46cGFzc3dvcmQxMjM="  # Hardcoded API value, not a real secret
 USER_AGENT = "ukk0-test"
+AUTH_METHODS = {"api_key", "cookie_token"}
 
 
 class TestAPI:
@@ -32,24 +33,23 @@ class TestAPI:
             **kwargs,
         )
 
-    @staticmethod
-    def _add_headers(
-        api_key: Optional[str] = None,
-        token: Optional[str] = None,
-    ) -> Dict[str, str]:
+    @classmethod
+    def _add_headers(cls, auth_method: Optional[str] = None) -> Dict[str, str]:
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
             "User-Agent": USER_AGENT,
         }
-        if api_key:
-            headers.update({"Authorization": f"Basic {api_key}"})
-        if token:
-            headers.update({"Cookie": f"token={token}"})
+        if auth_method is not None and auth_method not in AUTH_METHODS:
+            raise ValueError(f"Authorization method must be one of {AUTH_METHODS}")
+        elif auth_method == "api_key":
+            headers.update({"Authorization": f"Basic {API_KEY}"})
+        elif auth_method == "cookie_token":
+            headers.update({"Cookie": f"token={cls._get_auth_token()}"})
         return headers
 
     @classmethod
-    def create_auth_token(cls) -> str:
+    def _get_auth_token(cls) -> str:
         url = "auth"
         response = cls._api_request(
             url=url,
@@ -69,7 +69,7 @@ class TestAPI:
         deposit_paid: bool,
         check_in: str,
         check_out: str,
-        additional_needs: Optional[str] = None,
+        additional_needs: Optional[str],
     ) -> Response:
         url = "booking"
         data = create_or_update_booking_payload(
@@ -81,16 +81,18 @@ class TestAPI:
             check_out,
             additional_needs,
         )
-        response = cls._api_request(url=url, headers=cls._add_headers(), method="POST", json=data)
+        response = cls._api_request(
+            url=url, headers=cls._add_headers(), method="POST", json=data
+        )
         return response
 
     @classmethod
     def get_list_of_booking_ids(
-            cls,
-            first_name: Optional[str] = None,
-            last_name: Optional[str] = None,
-            check_in: Optional[str] = None,
-            check_out: Optional[str] = None,
+        cls,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        check_in: Optional[str] = None,
+        check_out: Optional[str] = None,
     ) -> Response:
         url = "booking"
         query_params = []
@@ -109,18 +111,59 @@ class TestAPI:
         return response
 
     @classmethod
-    def get_booking_by_id(cls) -> Response:
-        pass
+    def get_booking_by_id(cls, booking_id: str) -> Response:
+        url = f"booking/{booking_id}"
+        response = cls._api_request(url=url, headers=cls._add_headers(), method="GET")
+        return response
 
     @classmethod
-    def update_booking(cls) -> Response:
-        pass
+    def update_booking(
+        cls,
+        booking_id: str,
+        auth_method: str,
+        first_name: Optional[str],
+        last_name: Optional[str],
+        total_price: Optional[int],
+        deposit_paid: Optional[bool],
+        check_in: Optional[str],
+        check_out: Optional[str],
+        additional_needs: Optional[str],
+        partial_update: bool = False,
+    ) -> Response:
+        url = f"booking/{booking_id}"
+        if partial_update:
+            data = partial_update_booking_payload(
+                first_name,
+                last_name,
+                total_price,
+                deposit_paid,
+                check_in,
+                check_out,
+                additional_needs,
+            )
+        else:
+            data = create_or_update_booking_payload(
+                first_name,
+                last_name,
+                total_price,
+                deposit_paid,
+                check_in,
+                check_out,
+                additional_needs,
+            )
+        method = "PATCH" if partial_update else "PUT"
+        response = cls._api_request(
+            url=url,
+            headers=cls._add_headers(auth_method=auth_method),
+            method=method,
+            json=data,
+        )
+        return response
 
     @classmethod
-    def partial_update_booking(cls) -> Response:
-        pass
-
-    @classmethod
-    def delete_booking(cls) -> Response:
-        pass
-
+    def delete_booking(cls, booking_id: str, auth_method: str) -> Response:
+        url = f"booking/{booking_id}"
+        response = cls._api_request(
+            url=url, headers=cls._add_headers(auth_method=auth_method), method="DELETE"
+        )
+        return response

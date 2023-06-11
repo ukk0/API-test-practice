@@ -7,13 +7,13 @@ def auth_token_payload() -> Dict[str, str]:  # Hardcoded API values, not real se
 
 
 def create_or_update_booking_payload(
-    first_name: str,
-    last_name: str,
-    total_price: int,
-    deposit_paid: bool,
-    check_in: str,
-    check_out: str,
-    additional_needs: Optional[str],
+    first_name: Optional[str] = "FIRST",
+    last_name: Optional[str] = "LAST",
+    total_price: Optional[int] = 150,
+    deposit_paid: Optional[bool] = False,
+    check_in: Optional[str] = "1970-01-01",
+    check_out: Optional[str] = "2038-01-19",
+    additional_needs: Optional[str] = None,
 ) -> Dict[str, Any]:
     payload = {
         "firstname": first_name,
