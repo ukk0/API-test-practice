@@ -1,10 +1,5 @@
-from requests import request, Response
-from typing import Optional, Dict, Any, Union
-from resources.request_payloads import (
-    auth_token_payload,
-    create_or_update_booking_payload,
-    partial_update_booking_payload,
-)
+from typing import Any, Dict, Optional, Union
+from requests import Response, request
 
 API_URL = "https://restful-booker.herokuapp.com"
 API_KEY = "YWRtaW46cGFzc3dvcmQxMjM="  # Hardcoded API value, not a real secret
@@ -55,44 +50,30 @@ class TestAPI:
             url=url,
             headers=cls._add_headers(),
             method="POST",
-            json=auth_token_payload(),
+            json=cls._auth_token_payload(),
         )
         token = response.json()["token"]
         return token
 
+    @staticmethod
+    def _auth_token_payload() -> Dict[str, str]:  # not real secrets
+        return {"username": "admin", "password": "password123"}
+
     @classmethod
-    def create_booking(
-        cls,
-        first_name: str,
-        last_name: str,
-        total_price: int,
-        deposit_paid: bool,
-        check_in: str,
-        check_out: str,
-        additional_needs: Optional[str],
-    ) -> Response:
+    def create_booking(cls, request_payload: Dict[str, Any]) -> Response:
         url = "booking"
-        data = create_or_update_booking_payload(
-            first_name,
-            last_name,
-            total_price,
-            deposit_paid,
-            check_in,
-            check_out,
-            additional_needs,
-        )
         response = cls._api_request(
-            url=url, headers=cls._add_headers(), method="POST", json=data
+            url=url, headers=cls._add_headers(), method="POST", json=request_payload
         )
         return response
 
     @classmethod
-    def get_list_of_booking_ids(
+    def list_booking_ids(
         cls,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        check_in: Optional[str] = None,
-        check_out: Optional[str] = None,
+        first_name: Optional[str],
+        last_name: Optional[str],
+        check_in: Optional[str],
+        check_out: Optional[str],
     ) -> Response:
         url = "booking"
         query_params = []
@@ -121,42 +102,16 @@ class TestAPI:
         cls,
         booking_id: str,
         auth_method: str,
-        first_name: Optional[str],
-        last_name: Optional[str],
-        total_price: Optional[int],
-        deposit_paid: Optional[bool],
-        check_in: Optional[str],
-        check_out: Optional[str],
-        additional_needs: Optional[str],
+        request_payload: Dict[str, Any],
         partial_update: bool = False,
     ) -> Response:
         url = f"booking/{booking_id}"
-        if partial_update:
-            data = partial_update_booking_payload(
-                first_name,
-                last_name,
-                total_price,
-                deposit_paid,
-                check_in,
-                check_out,
-                additional_needs,
-            )
-        else:
-            data = create_or_update_booking_payload(
-                first_name,
-                last_name,
-                total_price,
-                deposit_paid,
-                check_in,
-                check_out,
-                additional_needs,
-            )
         method = "PATCH" if partial_update else "PUT"
         response = cls._api_request(
             url=url,
             headers=cls._add_headers(auth_method=auth_method),
             method=method,
-            json=data,
+            json=request_payload,
         )
         return response
 

@@ -1,30 +1,28 @@
-from typing import Optional, Dict, Any
+from random import choice, randint
+from typing import Any, Dict, Optional
 
-
-def auth_token_payload() -> Dict[str, str]:  # Hardcoded API values, not real secrets
-    payload = {"username": "admin", "password": "password123"}
-    return payload
+from lorem_text import lorem
 
 
 def create_or_update_booking_payload(
-    first_name: Optional[str] = "FIRST",
-    last_name: Optional[str] = "LAST",
-    total_price: Optional[int] = 150,
-    deposit_paid: Optional[bool] = False,
-    check_in: Optional[str] = "1970-01-01",
-    check_out: Optional[str] = "2038-01-19",
-    additional_needs: Optional[str] = None,
+    first_name: Optional[str],
+    last_name: Optional[str],
+    total_price: Optional[int],
+    deposit_paid: Optional[bool],
+    check_in: Optional[str],
+    check_out: Optional[str],
+    additional_needs: Optional[str],
 ) -> Dict[str, Any]:
     payload = {
-        "firstname": first_name,
-        "lastname": last_name,
-        "totalprice": total_price,
-        "depositpaid": deposit_paid,
+        "firstname": first_name or lorem.words(1),
+        "lastname": last_name or lorem.words(1),
+        "totalprice": total_price or randint(100, 1000),
+        "depositpaid": deposit_paid or choice([True, False]),
         "bookingdates": {
-            "checkin": check_in,
-            "checkout": check_out,
+            "checkin": check_in or "1970-01-01",
+            "checkout": check_out or "2038-01-19",
         },
-        "additionalneeds": additional_needs,
+        "additionalneeds": additional_needs or lorem.words(5),
     }
     return payload
 
