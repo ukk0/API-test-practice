@@ -122,3 +122,9 @@ class TestAPI:
             url=url, headers=cls._add_headers(auth_method=auth_method), method="DELETE"
         )
         return response
+
+    @classmethod
+    def ping_api(cls) -> Response:
+        url = "ping"
+        response = cls._api_request(url=url, headers=cls._add_headers(), method="GET")
+        return response
