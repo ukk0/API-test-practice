@@ -37,7 +37,42 @@ def test_booking_can_be_deleted_and_both_auth_schemes_are_accepted(auth_method):
 
 
 def test_booking_can_be_fully_updated():
-    pass
+    runner = TestRunner(auth_method="api_key")
+
+    # Create booking with random data (except boolean)
+    new_booking_data = runner.create_booking()
+    booking_id = new_booking_data.booking_id
+
+    # Update booking with all new data
+    update_data = runner.update_booking(
+        booking_id=booking_id,
+        first_name="Testy",
+        last_name="McTester",
+        total_price=2000,
+        deposit_paid=True,
+        check_in="2020-01-01",
+        check_out="2020-01-10",
+        additional_needs="Breakfast",
+    )
+
+    # Get booking data and check it was updated
+    attributes_to_compare = [
+        "first_name",
+        "last_name",
+        "total_price",
+        "deposit_paid",
+        "check_in",
+        "check_out",
+        "additional_needs",
+    ]
+
+    current_data = runner.get_booking_by_id(booking_id=booking_id)
+    for attr in attributes_to_compare:
+        assert (
+            getattr(update_data, attr)
+            == getattr(current_data, attr)
+            != getattr(new_booking_data, attr)
+        )
 
 
 def test_booking_can_be_partially_updated():
