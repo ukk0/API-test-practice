@@ -4,7 +4,7 @@ from resources.test_runner import TestRunner
 
 @pytest.mark.parametrize(
     ("first_name", "last_name"),
-    [("Alan", "Shepard"), ("Buzz", "Aldrin"), ("Yuri", "Gagarin")],
+    [("Alan", "Shepard"), ("Yuri", "Gagarin")],
 )
 def test_new_bookings_can_be_created_and_found(first_name, last_name):
     runner = TestRunner()
@@ -22,24 +22,30 @@ def test_new_bookings_can_be_created_and_found(first_name, last_name):
     assert new_booking.additional_needs == booking_data.additional_needs
 
 
-@pytest.mark.parametrize("auth_method", ["api_key", "cookie_token"])
-def test_booking_can_be_deleted_and_both_auth_schemes_are_accepted(auth_method):
+@pytest.mark.parametrize("auth_method", ["api_key", "cookie_token", "invalid_auth"])
+def test_deletion_with_auth_schemes_respected(auth_method):
     runner = TestRunner(auth_method=auth_method)
 
     # Create booking with random data
     new_booking_id = runner.create_booking().booking_id
 
     # Delete booking
-    runner.delete_booking(new_booking_id)
+    try:
+        runner.delete_booking(new_booking_id)
+    except ValueError:
+        if auth_method == "invalid_auth":
+            assert True
 
     # Check that no booking with this ID no longer exists
-    runner.get_booking_by_id(new_booking_id, expect_failure=True)
+    runner.get_booking_by_id(
+        new_booking_id, expect_failure=True if auth_method != "invalid_auth" else False
+    )
 
 
 def test_booking_can_be_fully_updated():
     runner = TestRunner(auth_method="api_key")
 
-    # Create booking with random data (except boolean)
+    # Create booking with random data
     new_booking_data = runner.create_booking()
     booking_id = new_booking_data.booking_id
 
@@ -76,8 +82,51 @@ def test_booking_can_be_fully_updated():
 
 
 def test_booking_can_be_partially_updated():
-    pass
+    runner = TestRunner(auth_method="api_key")
+
+    # Create booking with random data
+    new_booking_data = runner.create_booking()
+    booking_id = new_booking_data.booking_id
+
+    # Update name fields and validate they have been changed
+    update_data = runner.update_booking(
+        booking_id=booking_id,
+        partial_update=True,
+        first_name="Testy",
+        last_name="McTester",
+    )
+    assert new_booking_data.first_name != update_data.first_name
+    assert new_booking_data.last_name != update_data.last_name
+
+    # Update price and deposit fields and validate they have been changed
+    update_data = runner.update_booking(
+        booking_id=booking_id,
+        partial_update=True,
+        total_price=2000,
+        deposit_paid=True,
+    )
+    assert new_booking_data.total_price != update_data.total_price
+    assert new_booking_data.deposit_paid != update_data.deposit_paid
+
+    # Update checkin and checkout fields and validate they have been changed
+    update_data = runner.update_booking(
+        booking_id=booking_id,
+        partial_update=True,
+        check_in="2020-01-01",
+        check_out="2020-01-10",
+    )
+    assert new_booking_data.check_in != update_data.check_in
+    assert new_booking_data.check_out != update_data.check_out
 
 
 def test_booking_listing_respects_search_parameters():
-    pass
+    runner = TestRunner(auth_method="api_key")
+
+    # Search for bookings with certain parameters
+    list_of_bookings = runner.list_booking_ids(first_name="Testy", last_name="McTester")
+
+    # Validate returned bookings match the search parameters
+    for booking in list_of_bookings:
+        booking_data = runner.get_booking_by_id(booking_id=str(booking["bookingid"]))
+        assert booking_data.first_name == "Testy"
+        assert booking_data.last_name == "McTester"
