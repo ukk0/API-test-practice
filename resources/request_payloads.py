@@ -5,36 +5,36 @@ from lorem_text import lorem
 
 
 def create_or_update_booking_payload(
-    first_name: Optional[str],
-    last_name: Optional[str],
-    total_price: Optional[int],
-    deposit_paid: Optional[bool],
-    check_in: Optional[str],
-    check_out: Optional[str],
-    additional_needs: Optional[str],
+    first_name: Optional[str] = lorem.words(1),
+    last_name: Optional[str] = lorem.words(1),
+    total_price: Optional[int] = randint(100, 1000),
+    deposit_paid: Optional[bool] = choice([True, False]),
+    check_in: Optional[str] = "1970-01-01",
+    check_out: Optional[str] = "2038-01-19",
+    additional_needs: Optional[str] = lorem.words(5),
 ) -> Dict[str, Any]:
     payload = {
-        "firstname": first_name or lorem.words(1),
-        "lastname": last_name or lorem.words(1),
-        "totalprice": total_price or randint(100, 1000),
-        "depositpaid": deposit_paid or choice([True, False]),
+        "firstname": first_name,
+        "lastname": last_name,
+        "totalprice": total_price,
+        "depositpaid": deposit_paid,
         "bookingdates": {
-            "checkin": check_in or "1970-01-01",
-            "checkout": check_out or "2038-01-19",
+            "checkin": check_in,
+            "checkout": check_out,
         },
-        "additionalneeds": additional_needs or lorem.words(5),
+        "additionalneeds": additional_needs,
     }
     return payload
 
 
 def partial_update_booking_payload(
-    first_name: Optional[str],
-    last_name: Optional[str],
-    total_price: Optional[int],
-    deposit_paid: Optional[bool],
-    check_in: Optional[str],
-    check_out: Optional[str],
-    additional_needs: Optional[str],
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    total_price: Optional[int] = None,
+    deposit_paid: Optional[bool] = None,
+    check_in: Optional[str] = None,
+    check_out: Optional[str] = None,
+    additional_needs: Optional[str] = None,
 ) -> Dict[str, Any]:
     payload = {}
     if first_name:
