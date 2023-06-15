@@ -12,7 +12,7 @@ class TestAPI:
     def _api_request(
         cls,
         url: str,
-        headers: Dict[str, Any],
+        headers: Optional[Dict[str, Any]] = None,
         method: str = "GET",
         timeout: int = 100,
         json: Optional[Dict[str, Any]] = None,
@@ -70,10 +70,10 @@ class TestAPI:
     @classmethod
     def list_booking_ids(
         cls,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        check_in: Optional[str] = None,
-        check_out: Optional[str] = None,
+        first_name: Optional[str],
+        last_name: Optional[str],
+        check_in: Optional[str],
+        check_out: Optional[str],
     ) -> Response:
         url = "booking"
         query_params = []
