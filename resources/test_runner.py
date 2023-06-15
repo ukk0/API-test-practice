@@ -1,5 +1,6 @@
 from collections import namedtuple
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Union
+from requests import Response
 
 from resources.api_client import TestAPI
 from resources.request_payloads import (
@@ -8,7 +9,17 @@ from resources.request_payloads import (
 )
 
 OrderDetails = namedtuple(
-    "OrderDetails", ("booking_id", "first_name", "last_name", "check_in", "check_out")
+    "OrderDetails",
+    (
+        "booking_id",
+        "first_name",
+        "last_name",
+        "total_price",
+        "deposit_paid",
+        "check_in",
+        "check_out",
+        "additional_needs",
+    ),
 )
 
 
@@ -75,8 +86,11 @@ class TestRunner:
             booking_id=json_response["bookingid"],
             first_name=json_response["booking"]["firstname"],
             last_name=json_response["booking"]["lastname"],
+            total_price=json_response["booking"]["totalprice"],
+            deposit_paid=json_response["booking"]["depositpaid"],
             check_in=json_response["booking"]["bookingdates"]["checkin"],
             check_out=json_response["booking"]["bookingdates"]["checkout"],
+            additional_needs=json_response["booking"]["additionalneeds"],
         )
 
     def list_booking_ids(
@@ -94,8 +108,13 @@ class TestRunner:
         assert isinstance(json_response, list)
         return json_response
 
-    def get_booking_by_id(self, booking_id: str) -> Dict[str, Any]:
+    def get_booking_by_id(
+        self, booking_id: str, expect_failure: bool = False
+    ) -> Union[OrderDetails, Response]:
         get_booking_response = self.api.get_booking_by_id(booking_id)
+        if expect_failure:
+            assert get_booking_response.status_code == 404
+            return get_booking_response
         json_response = get_booking_response.json()
         assert get_booking_response.status_code == 200
         assert "firstname" in json_response
@@ -106,12 +125,21 @@ class TestRunner:
         assert "checkin" in json_response["bookingdates"]
         assert "checkout" in json_response["bookingdates"]
         assert "additionalneeds" in json_response
-        return json_response
+
+        return OrderDetails(
+            booking_id=booking_id,
+            first_name=json_response["firstname"],
+            last_name=json_response["lastname"],
+            total_price=json_response["totalprice"],
+            deposit_paid=json_response["depositpaid"],
+            check_in=json_response["bookingdates"]["checkin"],
+            check_out=json_response["bookingdates"]["checkout"],
+            additional_needs=json_response["additionalneeds"],
+        )
 
     def update_booking(
         self,
         booking_id: str,
-        auth_method: str,
         partial_update: bool = False,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
@@ -143,7 +171,7 @@ class TestRunner:
             )
         )
         update_booking_response = self.api.update_booking(
-            booking_id, auth_method, payload, partial_update
+            booking_id, self.auth_method, payload, partial_update
         )
         json_response = update_booking_response.json()
         assert update_booking_response.status_code == 200
@@ -167,16 +195,19 @@ class TestRunner:
         if check_in:
             assert check_in == json_response["bookingdates"]["checkin"]
         if check_out:
-            assert check_in == json_response["bookingdates"]["checkout"]
+            assert check_out == json_response["bookingdates"]["checkout"]
 
         return OrderDetails(
             booking_id=booking_id,
             first_name=json_response["firstname"],
             last_name=json_response["lastname"],
+            total_price=json_response["totalprice"],
+            deposit_paid=json_response["depositpaid"],
             check_in=json_response["bookingdates"]["checkin"],
             check_out=json_response["bookingdates"]["checkout"],
+            additional_needs=json_response["additionalneeds"],
         )
 
-    def delete_booking(self, booking_id: str, auth_method: str):
-        delete_booking_response = self.api.delete_booking(booking_id, auth_method)
+    def delete_booking(self, booking_id: str):
+        delete_booking_response = self.api.delete_booking(booking_id, self.auth_method)
         assert delete_booking_response.status_code == 201

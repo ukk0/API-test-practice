@@ -3,7 +3,7 @@ from requests import Response, request
 
 API_URL = "https://restful-booker.herokuapp.com"
 API_KEY = "YWRtaW46cGFzc3dvcmQxMjM="  # Hardcoded API value, not a real secret
-USER_AGENT = "ukk0-test"
+USER_AGENT = "Automatic-API-test"
 AUTH_METHODS = {"api_key", "cookie_token"}
 
 
@@ -12,7 +12,7 @@ class TestAPI:
     def _api_request(
         cls,
         url: str,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Dict[str, Any],
         method: str = "GET",
         timeout: int = 100,
         json: Optional[Dict[str, Any]] = None,
@@ -70,10 +70,10 @@ class TestAPI:
     @classmethod
     def list_booking_ids(
         cls,
-        first_name: Optional[str],
-        last_name: Optional[str],
-        check_in: Optional[str],
-        check_out: Optional[str],
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        check_in: Optional[str] = None,
+        check_out: Optional[str] = None,
     ) -> Response:
         url = "booking"
         query_params = []
@@ -121,4 +121,10 @@ class TestAPI:
         response = cls._api_request(
             url=url, headers=cls._add_headers(auth_method=auth_method), method="DELETE"
         )
+        return response
+
+    @classmethod
+    def ping_api(cls) -> Response:
+        url = "ping"
+        response = cls._api_request(url=url, headers=cls._add_headers(), method="GET")
         return response
