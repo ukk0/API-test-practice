@@ -195,7 +195,7 @@ class TestRunner:
         if check_in:
             assert check_in == json_response["bookingdates"]["checkin"]
         if check_out:
-            assert check_in == json_response["bookingdates"]["checkout"]
+            assert check_out == json_response["bookingdates"]["checkout"]
 
         return OrderDetails(
             booking_id=booking_id,
